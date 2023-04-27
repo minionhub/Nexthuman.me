@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "nexthuman-dev",
+    "dev": "nexthuman-dev",
+    "prod": "nexthuman"
+  }
+}

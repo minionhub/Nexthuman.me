@@ -1,0 +1,75 @@
+{
+  "indexes": [
+    {
+      "collectionId": "events",
+      "fields": [
+        { "fieldPath": "experiences", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "to", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionId": "events",
+      "fields": [
+        { "fieldPath": "producers", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "to", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionId": "events",
+      "fields": [
+        { "fieldPath": "participants", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "to", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionId": "events",
+      "fields": [
+        { "fieldPath": "producers", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "to", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionId": "events",
+      "fields": [
+        { "fieldPath": "participants", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "to", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionId": "events",
+      "fields": [
+        { "fieldPath": "id", "order": "ASCENDING" },
+        { "fieldPath": "to", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionId": "books",
+      "fields": [
+        { "fieldPath": "isUpcoming", "order": "ASCENDING" },
+        { "fieldPath": "updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionId": "chapters",
+      "fields": [
+        { "fieldPath": "bookId", "order": "ASCENDING" },
+        { "fieldPath": "created", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionId": "pivot_book_chapter_story",
+      "fields": [
+        { "fieldPath": "created", "order": "DESCENDING" },
+        { "fieldPath": "updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionId": "pivot_book_chapter_story",
+      "fields": [
+        { "fieldPath": "bookId", "order": "ASCENDING" },
+        { "fieldPath": "created", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

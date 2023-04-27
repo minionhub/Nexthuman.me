@@ -1,0 +1,133 @@
+version: 2.1
+
+orbs:
+  cypress: cypress-io/cypress@1.25.1
+
+references:
+  container_defaults: &container_defaults
+    docker:
+      - image: circleci/node:12
+    working_directory: ~/nexthuman
+
+  cypress_cache_key: &cypress_cache_key cy-cache-nexthuman-{{ checksum "yarn.lock" }}
+
+  cache_key: &cache_key cache-nexthuman-{{ checksum "yarn.lock" }}
+
+  save_deps_cache: &save_deps_cache
+    save_cache:
+      key: *cache_key
+      paths:
+        - ./node_modules
+
+  restore_deps_cache: &restore_deps_cache
+    restore_cache:
+      keys:
+        - *cache_key
+
+jobs:
+  setup:
+    <<: *container_defaults
+    steps:
+      - checkout
+      - *restore_deps_cache
+      - run:
+          name: Install dependencies
+          command: yarn install --frozen-lockfile
+      - *save_deps_cache
+
+  deploy-dev:
+    <<: *container_defaults
+    steps:
+      - checkout
+      - *restore_deps_cache
+      - run:
+          name: Use dev config
+          command: cp .circleci/assets/dev.firebase.config.js src/store/config/config.firebase.js && cp .circleci/assets/dev.stripe.config.json src/constants/stripe.json && cp .circleci/assets/dev.stripe.config.json functions/stripe.json
+      - run:
+          name: Build app
+          no_output_timeout: 30m
+          command: 'CI=false yarn build'
+      - run:
+          name: Build functions
+          command: cd functions && yarn install --frozen-lockfile
+      - run:
+          name: Deploy app
+          command: ./node_modules/.bin/firebase deploy --token "$FIREBASE_TOKEN" --only hosting,functions,firestore --project=dev
+
+  deploy-prod:
+    <<: *container_defaults
+    steps:
+      - checkout
+      - *restore_deps_cache
+      - run:
+          name: Use prod config
+          command: cp .circleci/assets/prod.firebase.config.js src/store/config/config.firebase.js && cp .circleci/assets/prod.stripe.config.json src/constants/stripe.json && cp .circleci/assets/prod.stripe.config.json functions/stripe.json
+      - run:
+          name: Build app
+          no_output_timeout: 30m
+          command: 'CI=false yarn build'
+      - run:
+          name: Build functions
+          command: cd functions && yarn install --frozen-lockfile
+      - run:
+          name: Deploy app
+          command: ./node_modules/.bin/firebase deploy --token "$FIREBASE_TOKEN" --only hosting,functions,firestore --project=prod
+
+workflows:
+  version: 2
+
+  Review:
+    jobs:
+      - cypress/run:
+          filters:
+            branches:
+              ignore:
+                - dev
+                - master
+          attach-workspace: false
+          yarn: true
+          cache-key: *cypress_cache_key
+          build: 'CI=false yarn build'
+          start: './node_modules/.bin/firebase serve --port 3000 --project=dev'
+          wait-on: 'http://localhost:3000'
+          command: yarn cy:run:electron:headless
+          no-workspace: true
+
+  DeployDev:
+    jobs:
+      - cypress/run:
+          filters:
+            branches:
+              only:
+                - dev
+          attach-workspace: false
+          yarn: true
+          cache-key: *cypress_cache_key
+          build: 'CI=false yarn build'
+          start: './node_modules/.bin/firebase serve --port 3000 --project=dev'
+          wait-on: 'http://localhost:3000'
+          command: yarn cy:run:electron:headless
+          no-workspace: true
+      - setup:
+          requires:
+            - cypress/run
+      - deploy-dev:
+          requires:
+            - setup
+
+  DeployProd:
+    jobs:
+      - setup:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - deploy-prod:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - setup
